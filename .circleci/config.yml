@@ -1,0 +1,82 @@
+# Javascript Node CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-javascript/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: circleci/node:10
+
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/mongo:3.4.4
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run: yarn install
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+      # run tests!
+      - run: yarn test
+
+
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang
+    environment:
+      O: <your github organization>
+      R: <your github repo>
+    steps:
+      - checkout
+      - run:
+          name: Determine which directories have changed 
+          - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run: yarn install
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+      # run tests!
+      - run: yarn test
+          command: |
+            git diff --no-commit-id --name-only -r `git log -n 2 --oneline --pretty=format:"%h" | tail -n1` | cut -d/ -f1 | sort -u >  projects
+            printf "Modified directories:\n"
+            cat projects
+            while read project; do
+              if grep -Fxq $project projects.txt; then
+                printf "\nTriggerring build for dir: "$dir
+                curl -s -u ${CIRCLE_TOKEN}: \
+                  -d build_parameters[CIRCLE_JOB]=${project} \                
+                  https://circleci.com/api/v1.1/project/github/$O/$R/tree/$CIRCLE_BRANCH
+              fi
+            done <projects
+  project1:
+    ... job to build project1
+  project2:
+    ... job to build project2
