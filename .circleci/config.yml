@@ -1,3 +1,4 @@
-dependencies:
-  post:
-    - npm run bootstrap
+jobs:
+  build:
+    steps:
+      - npm run bootstrap
