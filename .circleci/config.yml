@@ -1,37 +1,30 @@
-# Javascript Node CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-javascript/ for more details
-#
-version: 2
-jobs:
-  build:
-    docker:
-      # specify the version you desire here
-      - image: circleci/node:10.15
+machine:
+  environment:
+    PATH: "${PATH}:${HOME}/${monorepo-lerna}/node_modules/.bin"
+    # disable create-react-app watching mode of testing
+    CI: "true"
+  node:
+    version: 10.15.3
 
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/mongo:3.4.4
+dependencies:
+  pre:
+    - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+    # - echo -e "$NPM_USER\n$NPM_PASS\n$NPM_EMAIL" | npm login
+  override:
+    - yarn
+    - yarn lerna:install
+  cache_directories:
+    - ~/.cache/yarn
 
-    working_directory: ~/repo
+test:
+  override:
+    - yarn test
 
-    steps:
-      - checkout
-
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "package.json" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
-
-      - run: node ./packages/usage/index.js
-
-      - save_cache:
-          paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
-
-      # run tests!
-      - run: node ./packages/usage/index.js
+deployment:
+  production:
+    branch: master
+    commands:
+      - git config --global user.email giosevid@gmail.com
+      - git config --global user.name giosevid
+    # because yarn has troll
+      - npm run publish-all
