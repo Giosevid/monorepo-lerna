@@ -1,30 +1,3 @@
-machine:
-  environment:
-    PATH: "${PATH}:${HOME}/${monorepo-lerna}/node_modules/.bin"
-    # disable create-react-app watching mode of testing
-    CI: "true"
-  node:
-    version: 10.15.3
-
 dependencies:
-  pre:
-    - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-    # - echo -e "$NPM_USER\n$NPM_PASS\n$NPM_EMAIL" | npm login
-  override:
-    - yarn
-    - yarn lerna:install
-  cache_directories:
-    - ~/.cache/yarn
-
-test:
-  override:
-    - yarn test
-
-deployment:
-  production:
-    branch: master
-    commands:
-      - git config --global user.email giosevid@gmail.com
-      - git config --global user.name giosevid
-    # because yarn has troll
-      - npm run publish-all
+  post:
+    - npm run bootstrap
